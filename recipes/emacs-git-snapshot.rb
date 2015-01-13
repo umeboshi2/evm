@@ -10,6 +10,7 @@ recipe 'emacs-git-snapshot' do
   linux do
     option '--prefix', installation_path
     option '--without-gif'
+    option '--with-x-toolkit=lucid'
   end
 
   install do
