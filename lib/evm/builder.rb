@@ -64,7 +64,7 @@ module Evm
       end
 
       def make(target)
-        run_command 'make', target
+        run_command 'make', '-j5', target
       end
 
       def builds_path
