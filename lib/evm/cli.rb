@@ -1,37 +1,62 @@
+require 'optparse'
+
 module Evm
   module Cli
     def self.parse(argv)
       options = {}
 
-      if argv.include?('--force')
-        options[:force] = !!argv.delete('--force')
+      optparse = OptionParser.new do |opts|
+        opts.banner += ' command'
+
+        opts.separator  ''
+        opts.separator  'Emacs Version Manager.'
+        opts.separator  ''
+        opts.separator  'Commands:'
+        opts.separator  '        install                      Install package name'
+        opts.separator  '        uninstall                    Uninstall package name'
+        opts.separator  '        bin [name]                   Show path to Emacs binary for package name'
+        opts.separator  '        list                         List all available packages'
+        opts.separator  '        use <name>                   Select name as current package'
+        opts.separator  '        disuse                       Stop using the current package (remove binary from path but leave installed)'
+        opts.separator  '        config <var> <value>         Set the value of a configuration variable (like path)'
+        opts.separator  '        help                         Display this help message'
+        opts.separator  ''
+        opts.separator  'Options:'
+
+        opts.on('--force', 'Force install even when already installed') do
+          options[:force] = true
+        end
+
+        opts.on('--skip', 'Ignore if already installed') do
+          options[:skip] = true
+        end
+
+        opts.on('--use', 'Select as current package after installing') do
+          options[:use] = true
+        end
+
+        opts.on_tail('--help', '-h', 'Display this help message') do
+          puts opts
+          exit
+        end
       end
 
-      if argv.include?('--skip')
-        options[:skip] = !!argv.delete('--skip')
-      end
+      optparse.parse!(argv)
 
-      if argv.include?('--use')
-        options[:use] = !!argv.delete('--use')
-      end
+      command = argv.shift
 
-      command, argument = argv
-
-      if argv.include?('--help') || argv.include?('-h') || command.nil?
-        Evm.print_usage_and_exit
+      if command == 'help' || !command
+        puts optparse
+        exit
       end
 
       begin
         const = Evm::Command.const_get(command.capitalize)
-      rescue NameError => exception
-        Evm.abort 'No such command:', command
+      rescue NameError
+        raise Evm::Exception, "No such command: #{command}"
       end
 
-      begin
-        const.new(argument, options)
-      rescue Evm::Exception => exception
-        Evm.abort exception.message
-      end
+      const.new(argv, options)
     end
   end
 end

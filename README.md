@@ -1,5 +1,22 @@
 # Emacs Version Manager
 
+## Deprecation Warning!
+
+As Travis is moving towards a container-based infrastructure, hence
+sudo is not possible, EVM added support for Travis specific binaries
+(ends with `-travis`), which will be installed in `/tmp`.
+
+All `-bin` versions will are deprecated and will be removed. Do not use them!
+
+To run EVM on Travis, set the EVM path to `/tmp`:
+
+```bash
+$ evm config path /tmp
+```
+
+See https://gist.github.com/rejeep/ebcd57c3af83b049833b for more
+information on how to use EVM on Travis.
+
 ## Why EVM?
 
 * Did you ever wonder how to install Emacs? Homebrew, apt-get, Emacs
@@ -29,12 +46,15 @@ Not supported. Need help from someone running Windows.
 
 ## Installation
 
-EVM installs all Emacs versions under `/usr/local/evm`. This is not
-configurable and that is because EVM provides pre compiled binaries,
-which unfortunately must run in the directory it was compiled for.
+Default installation directory for EVM Emacs versions is
+`/usr/local/evm`. This can be changed with the `config` command:
 
-No matter what installation approach you choose, create
-`/usr/local/evm` and give your user access rights:
+```sh
+$ evm config path /foo/bar
+```
+
+No matter what installation approach you choose, create the
+installation directory and give your user access rights, for example:
 
 ```sh
 $ sudo mkdir /usr/local/evm
@@ -50,7 +70,7 @@ $ curl -fsSkL https://raw.github.com/rejeep/evm/master/go | bash
 Add EVM's `bin` directory to your `PATH`.
 
 ```sh
-$ export PATH="~/.evm/bin:$PATH"
+$ export PATH="$HOME/.evm/bin:$PATH"
 ```
 
 ### Homebrew
@@ -76,15 +96,15 @@ $ git clone https://github.com/rejeep/evm.git ~/.evm
 Add EVM's `bin` directory to your `PATH`.
 
 ```sh
-$ export PATH="~/.evm/bin:$PATH"
+$ export PATH="$HOME/.evm/bin:$PATH"
 ```
 
 ## Usage
 
-In the Evm `bin` directory, there are two commands:
+In the Evm `bin` directory, there are a few commands:
 
 * `evm` - Manage Emacs packages
-* `emacs` - Emacs binary for currently selected Emacs package
+* `emacs/evm-emacs` - Emacs shim with currently selected Emacs package
 
 ### list
 
@@ -101,14 +121,12 @@ emacs-23.4
 emacs-24.1 [I]
 emacs-24.2
 * emacs-24.3 [I]
-emacs-24.3-bin [I]
+emacs-24.3-travis [I]
 ...
 ```
 
 The `[I]` shows what versions are currently installed and the `*`
 shows what version is currently selected.
-
-_NOTE: The versions with the `-bin` suffix should only to be used for testing._
 
 ### install <name>
 
@@ -138,7 +156,15 @@ Example:
 $ evm use emacs-24.2
 ```
 
-The Evm `emacs` binary will update and use that Emacs package.
+The Evm binary will update and use that Emacs package.
+
+### disuse
+
+To stop using an EVM binary and restore your personal or system defaults:
+
+```sh
+$ evm disuse
+```
 
 ### uninstall <name>
 
@@ -154,8 +180,8 @@ Prints the full path to `name`'s Emacs executable. If no name is
 specified, use currently selected.
 
 ```sh
-$ evm bin
-$ evm bin emacs-24.2
+$ evm bin # /usr/local/evm/emacs-24.5/Emacs.app/Contents/MacOS/Emacs
+$ evm bin emacs-24.2 # /usr/local/evm/emacs-24.2/Emacs.app/Contents/MacOS/Emacs
 ```
 
 ### help
@@ -186,61 +212,54 @@ Copy an existing recipe in the [recipes](/recipes) directory and make
 modifications for the new version.  Also add the new version to the
 [Travis configuration](/.travis.yml).
 
-### Adding precompiled binary
+### Adding Travis binary
 
-If you want to contribute a precompiled binary, these instructions will help.
+If you want to contribute a Travis binary, these instructions will help.
 
-#### Linux
+1. Install [Docker](https://www.docker.com/)
+1. Follow
+   [Travis instructions](https://docs.travis-ci.com/user/common-build-problems/#Running-a-Container-Based-Docker-Image-Locally)
+   on running a Travis image locally
+1. In the docker container, install necessary tools
 
-* Install [Vagrant](https://www.vagrantup.com/)
+    ```bash
+    docker$ sudo apt-get install build-essential libncurses-dev autoconf automake autogen git texinfo libtool
+    ```
+1. Download Emacs source
 
-* Install Vagrant SCP (https://github.com/invernizzi/vagrant-scp)
+    ```bash
+    docker$ wget http://ftpmirror.gnu.org/emacs/emacs-MAJOR.MINOR.tar.gz
+    ```
+1. Unzip it
 
-* Clone https://github.com/travis-ci/travis-cookbooks
+    ```bash
+    docker$ tar -xvzf emacs-MAJOR.MINOR.tar.gz
+    ```
+1. Compile and Install Emacs (follow
+   [these instructions](http://stackoverflow.com/questions/37544423/how-to-build-emacs-from-source-in-docker-hub-gap-between-bss-and-heap#37561793)
+   if you have a `"gap between BSS and heap error"`)
 
-* Enter `travis-cookbooks` and run `vagrant up`
+    ```bash
+    docker$ cd emacs-MAJOR.MINOR
+    docker$ ./autogen.sh # for snapshot
+    docker$ ./configure --without-all --prefix=/tmp/emacs-25.2-travis
+    docker$ make bootstrap
+    docker$ make install
+    ```
+1. Tar it
 
-* SSH into the VM: `$ vagrant ssh ID`
+    ```bash
+    docker$ cd /home/travis
+    docker$ tar -C /tmp -cvzf emacs-MAJOR.MINOR-travis.tar.gz emacs-MAJOR.MINOR-travis
+    ```
 
-* Install necessary tools
+1. Copy the tarball from the docker container to the host
 
-```bash
-$ sudo apt-get install libncurses-dev
-$ sudo apt-get install autoconf
-$ sudo apt-get install automake
-$ sudo apt-get install git
-```
+    ```bash
+    docker$ exit
+    $ docker cp <containerId>:/home/travis/emacs-MAJOR.MINOR-travis.tar.gz .
+    ```
 
-* Download Emacs source
+1. Create a new recipe and make a pull request.
 
-```bash
-$ wget http://ftpmirror.gnu.org/emacs/emacs-MAJOR.MINOR.tar.gz
-```
-
-* Unzip it
-
-```bash
-$ tar -xvzf emacs-MAJOR-MINOR.tar.gz
-```
-
-* Compile and Install Emacs
-
-```bash
-$ ./configure --without-all --prefix=/usr/local/evm/emacs-MAJOR.MINOR-bin
-$ make bootstrap
-$ make install
-```
-
-* Tar it
-
-```bash
-$ tar -cvzf emacs-MAJOR-MINOR-linux.tar.gz /usr/local/evm/emacs-MAJOR.MINOR-bin
-```
-
-* Copy from VM
-
-```bash
-$ vagrant scp ID:/usr/local/evm/emacs-MAJOR.MINOR-linux.tar.gz .
-```
-
-* Add zip file to [evm-bin](https://github.com/rejeep/evm-bin) and send a pull request
+1. Ask maintainer to add a new release and add the binary.

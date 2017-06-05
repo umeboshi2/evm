@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe Evm do
   it 'should return correct root directory' do
-    Evm::ROOT_PATH.should == File.expand_path('../..', File.dirname(__FILE__))
+    expect(Evm::ROOT_PATH).to eq(File.expand_path('../..', File.dirname(__FILE__)))
   end
 
-  it 'should return correct evm installation directory' do
-    Evm::LOCAL_PATH.should == '/usr/local/evm'
+  it 'should return correct local directory' do
+    expect(Evm::LOCAL_PATH).to eq('/usr/local/evm')
   end
 end
