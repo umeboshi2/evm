@@ -14,12 +14,12 @@ module Evm
         yield
       end
 
-      def git(url)
+      def git(url, branch = nil)
         git_repo = Evm::Git.new(build_path)
         if git_repo.exist?
           git_repo.pull
         else
-          git_repo.clone(url)
+          git_repo.clone(url, branch)
         end
       end
 
@@ -86,7 +86,7 @@ module Evm
 
       private
 
-      def tar_packaged(url,extension)
+      def tar_packaged(url, extension)
         tar_file_path = File.join(builds_path, @name + '.tar.' + extension)
 
         remote_file = Evm::RemoteFile.new(url)

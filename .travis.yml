@@ -8,11 +8,13 @@ before_install:
   - sudo apt-get build-dep -qq emacs23
   - sudo apt-get build-dep -qq emacs24
 
+  - bin/evm config path /tmp
   - bin/evm install $EVM_EMACS
   - bin/evm use $EVM_EMACS
 script:
   - bundle exec rspec spec
   - bin/emacs --version
+  - bin/emacs -Q --batch --eval '(unless (string= (getenv "EVM_EMACS") (format "emacs-%d.%d-travis" emacs-major-version emacs-minor-version)) (kill-emacs 1))'
 rvm:
   - 1.9.3
 env:
@@ -23,3 +25,4 @@ env:
   - EVM_EMACS=emacs-24.5-travis
   - EVM_EMACS=emacs-25.1-travis
   - EVM_EMACS=emacs-25.2-travis
+  - EVM_EMACS=emacs-25.3-travis
