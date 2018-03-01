@@ -33,7 +33,7 @@ module Evm
 
     def use!
       delete_shims!
-      [Evm::EMACS_PATH, Evm::EVM_EMACS_PATH].each do |bin_path|
+      [Evm::EMACS_PATH, Evm::EVM_EMACS_PATH, Evm::CLIENT_PATH, Evm::EVM_CLIENT_PATH].each do |bin_path|
         @file.open(bin_path, 'w') do |file|
           file.puts("#!/bin/bash\nexec \"#{bin}\" \"$@\"")
         end
@@ -48,7 +48,7 @@ module Evm
     end
 
     def delete_shims!
-      [Evm::EMACS_PATH, Evm::EVM_EMACS_PATH].each do |bin_path|
+      [Evm::EMACS_PATH, Evm::EVM_EMACS_PATH, Evm::CLIENT_PATH, Evm::EVM_CLIENT_PATH].each do |bin_path|
         @file.delete(bin_path) if @file.exists?(bin_path)
       end
     end
