@@ -10,7 +10,7 @@ module Evm
   CLIENT_PATH = File.join(ROOT_PATH, 'bin', 'emacsclient')
   EVM_CLIENT_PATH = File.join(ROOT_PATH, 'bin', 'evm-emacsclient')
   CONFIG_FILE = File.join(ROOT_PATH, '.config')
-  CONFIG_TYPES = [:path]
+  CONFIG_KEYS = [:path]
 
   def self.config
     Evm::Config.new(CONFIG_FILE, path: LOCAL_PATH)
